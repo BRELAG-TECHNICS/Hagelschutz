@@ -66,7 +66,7 @@ class Hagelschutz extends IPSModule
 		
 		if($contents !== false) {
 			$encoded = json_decode($contents, true);
-			$hailProtectionActive = GetValue($this->GetIDForIdent("STATE");
+			$hailProtectionActive = GetValue($this->GetIDForIdent("STATE"));
 			
 			IF($hailProtectionActive) {
 				switch($encoded['currentState']) {
