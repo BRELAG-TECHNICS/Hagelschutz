@@ -66,19 +66,22 @@ class Hagelschutz extends IPSModule
 		
 		if($contents !== false) {
 			$encoded = json_decode($contents, true);
+			$hailProtectionActive = GetValue($this->GetIDForIdent("STATE");
 			
-			switch($encoded['currentState']) {
-				case 0: // Kein Alarm
-					SetValue($this->GetIDForIdent("HAIL"), 0);
-				break;
-				
-				case 1: // Hagelalarm
-					SetValue($this->GetIDForIdent("HAIL"), 1);
-				break;
-				
-				case 2: // Testalarm
-					SetValue($this->GetIDForIdent("HAIL"), 2);
-				break; 
+			IF($hailProtectionActive) {
+				switch($encoded['currentState']) {
+					case 0: // Kein Alarm
+						SetValue($this->GetIDForIdent("HAIL"), 0);
+					break;
+					
+					case 1: // Hagelalarm
+						SetValue($this->GetIDForIdent("HAIL"), 1);
+					break;
+					
+					case 2: // Testalarm
+						SetValue($this->GetIDForIdent("HAIL"), 2);
+					break; 
+				}
 			}
 		}
 	}
