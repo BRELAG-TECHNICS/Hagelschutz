@@ -32,6 +32,7 @@ class Hagelschutz extends IPSModule
 		// Notwenige Variablen
 		$this->RegisterVariableBoolean("STATE", "Status", "HailState", 1);
 		SetValue($this->GetIDForIdent("STATE"), true);
+		$this->EnableAction("STATE");
 		$this->RegisterVariableInteger("HAIL", "Hagelmeldung", "HailWarning", 2);
             
         // Eigenschaften speichern
