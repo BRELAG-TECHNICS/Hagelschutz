@@ -37,7 +37,7 @@ class Hagelschutz extends IPSModule
             
         // Eigenschaften speichern
 		$this->RegisterPropertyString("deviceID", "");
-		$this->RegisterPropertyInteger("hwTypeID", 0);
+		$this->RegisterPropertyInteger("hwTypeID", 203);
 		
 		// Timer Registrieren
 		$this->RegisterTimer("GetRequest", 120000, 'BRELAG_GetHailRequest($_IPS[\'TARGET\']);');
@@ -59,29 +59,47 @@ class Hagelschutz extends IPSModule
 
 	public function GetHailRequest() {
 		$deviceID = $this->ReadPropertyString("deviceID");
-		$hwtypeID = $this->ReadPropertyInteger("hwTypeID");
-		// $url = 'https://meteo.netitservices.com/api/v0/devices/<String_DeviceID>/poll?hwtypeId=<hwtypeId_Integer>';
-		$url = "https://meteo.netitservices.com/api/v0/devices/" . $deviceID . "/poll?hwtypeId=" . $hwtypeID;
-		echo($url);
-		$contents = file_get_contents($url);
+		$hwTypeID = $this->ReadPropertyInteger("hwTypeID");
+		$hailProtectionActive = GetValue($this->GetIDForIdent("STATE"));
 		
-		if($contents !== false) {
-			$encoded = json_decode($contents, true);
-			$hailProtectionActive = GetValue($this->GetIDForIdent("STATE"));
-			
-			IF($hailProtectionActive) {
-				switch($encoded['currentState']) {
-					case 0: // Kein Alarm
+		$curl = curl_init();
+
+		curl_setopt_array($curl, [
+			CURLOPT_URL => "https://meteo.netitservices.com/api/v0/devices/". $deviceID . "/poll?hwtypeId=" . $hwTypeID,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => "",
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 30,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => "GET",
+		]);
+
+		$response = json_decode(curl_exec($curl),true);
+		$err = curl_error($curl);
+
+		curl_close($curl);
+		
+		if ($err) {
+			IPS_LogMessage("Hailprotection - error: " . $err);
+			echo "cURL Error #:" . $err;
+		} else {
+			//IPS_LogMessage($response);
+			if($hailProtectionActive) {
+				switch($response['currentState']) {
+					case 0: // Kein Hagelalarm
+						IPS_LogMessage("Hagelschutz", $response['currentState'] . " (Kein Hagel)");
 						SetValue($this->GetIDForIdent("HAIL"), 0);
 					break;
-					
+		
 					case 1: // Hagelalarm
+						IPS_LogMessage("Hagelschutz", $response['currentState'] . " (Hagelalarm)");
 						SetValue($this->GetIDForIdent("HAIL"), 1);
 					break;
-					
+		
 					case 2: // Testalarm
+						IPS_LogMessage("Hagelschutz", $response['currentState'] . " (Testalarm)");
 						SetValue($this->GetIDForIdent("HAIL"), 2);
-					break; 
+					break;
 				}
 			}
 		}
